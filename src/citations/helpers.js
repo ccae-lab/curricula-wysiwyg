@@ -93,13 +93,35 @@ export function firstAuthorSurname(authors) {
  *   { authors: 'Meadows, D. H.', year: 2008, doi: '10.1000/xyz' }
  *       → " [Meadows, 2008](https://doi.org/10.1000/xyz)"
  *
- * Falls back to a plain parenthetical when no URL is known.
+ *   { doi: '10.1000/xyz' } (enrichment failed, all we have is the DOI)
+ *       → " [10.1000/xyz](https://doi.org/10.1000/xyz)"
+ *
+ * Falls back to a short title or the raw citation when nothing else is
+ * available, so we never emit the mystery "Source, n.d." string.
  */
 export function defaultFormatInline(entry) {
   if (!entry) return '';
-  const surname = firstAuthorSurname(entry.authors) || entry.citation_key || 'Source';
-  const year = entry.year || 'n.d.';
-  const label = `${surname}, ${year}`;
+  const surname = firstAuthorSurname(entry.authors);
+  const year = entry.year || null;
   const href = doiToUrl(entry.doi_url || entry.doi) || entry.url || null;
-  return href ? ` [${label}](${href})` : ` (${label})`;
+
+  if (surname && year) {
+    return href ? ` [${surname}, ${year}](${href})` : ` (${surname}, ${year})`;
+  }
+  if (surname) {
+    return href ? ` [${surname}, n.d.](${href})` : ` (${surname}, n.d.)`;
+  }
+  if (entry.doi || entry.doi_url) {
+    const bareDoi = String(entry.doi || entry.doi_url).replace(/^https?:\/\/(dx\.)?doi\.org\//i, '');
+    return ` [${bareDoi}](${href || doiToUrl(bareDoi)})`;
+  }
+  if (entry.title) {
+    const short = entry.title.length > 60 ? `${entry.title.slice(0, 57)}…` : entry.title;
+    return href ? ` [${short}](${href})` : ` (${short})`;
+  }
+  if (entry.citation) {
+    const short = entry.citation.length > 60 ? `${entry.citation.slice(0, 57)}…` : entry.citation;
+    return href ? ` [${short}](${href})` : ` (${short})`;
+  }
+  return ' (reference)';
 }
