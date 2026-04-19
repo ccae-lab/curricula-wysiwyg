@@ -4,21 +4,26 @@ import { useEditableBlock } from './EditableContentProvider.jsx';
 import EditBadge from './EditBadge.jsx';
 
 /**
- * EditableText — inline text editor with pencil affordance.
+ * EditableText: inline text editor with pencil affordance.
  *
  * Outside edit mode or without a provider, renders the fallback as-is.
  * In edit mode, shows a pencil icon; clicking opens an input or textarea.
  * Edits are staged locally; the EditorTray flushes them.
  *
+ * For paragraphs and media-rich content, use EditableField instead. It
+ * shares the same staging flow but opens a full textarea panel with a
+ * toolbar (image, link, YouTube).
+ *
  * @param {Object} props
  * @param {string} props.blockKey
  * @param {string} [props.fallback='']
- * @param {string|React.ElementType} [props.as='span'] — wrapper tag
+ * @param {string|React.ElementType} [props.as='span'] - wrapper tag
  * @param {string} [props.className='']
  * @param {boolean} [props.multiline=false]
  * @param {string} [props.placeholder]
- * @param {Object} [props.classNames] — slots: wrapper, input, textarea, pencilButton
- * @param {Object} [props.badgeClassNames] — passed to EditBadge
+ * @param {string} [props.help] - tooltip on the pencil icon ("what is this block for?")
+ * @param {Object} [props.classNames] - slots: wrapper, input, textarea, pencilButton
+ * @param {Object} [props.badgeClassNames] - passed to EditBadge
  */
 
 export default function EditableText({
@@ -28,6 +33,7 @@ export default function EditableText({
   className = '',
   multiline = false,
   placeholder,
+  help,
   classNames = {},
   badgeClassNames,
   ...rest
@@ -58,7 +64,7 @@ export default function EditableText({
           marginLeft: 4, display: 'inline-flex', alignItems: 'center',
           fontSize: 10, color: '#4338ca', background: 'none', border: 'none', cursor: 'pointer',
         }}
-        title="Edit text"
+        title={help ? `${help} (click to edit)` : 'Click to edit this block'}
       >
         <Pencil style={{ width: 12, height: 12 }} />
       </button>

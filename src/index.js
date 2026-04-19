@@ -1,4 +1,4 @@
-// @curricula/wysiwyg — public API
+// @curricula/wysiwyg : public API
 
 // Provider + hooks
 export {
@@ -17,6 +17,24 @@ export { default as EditableJSON } from './react/EditableJSON.jsx';
 export { default as EditableField } from './react/EditableField.jsx';
 export { default as EditBadge } from './react/EditBadge.jsx';
 export { default as EditorTray } from './react/EditorTray.jsx';
+
+// Shortcode rendering
+export {
+  ShortcodePrint,
+  ShortcodeYouTube,
+  matchYouTubeLine,
+  extractYouTubeId,
+  hasShortcode,
+} from './shortcodes/index.jsx';
+
+// Toolbar plugin factories (for use with EditableField's toolbar prop)
+export {
+  imageUploadPlugin,
+  imageUrlPlugin,
+  linkPlugin,
+  youtubePlugin,
+  genericPlugins,
+} from './toolbar/plugins.jsx';
 
 // Adapters are imported directly from subpaths:
 //   import { createPostgRESTAdapter } from '@curricula/wysiwyg/adapters/postgrest'
