@@ -90,13 +90,22 @@ function ImageUploadPanel({ draft, setDraft, onClose, storageAdapter }) {
   );
 }
 
-export function imageUploadPlugin({ label = '+ IMAGE', color = '#f97316' } = {}) {
+export function imageUploadPlugin({
+  label = '+ IMAGE',
+  color = '#f97316',
+  storageAdapter: factoryStorageAdapter,
+} = {}) {
   return {
     key: 'image-upload',
     label,
     color,
     title: 'Upload an image file. Inserts ![alt](url) into the text.',
-    panel: ImageUploadPanel,
+    panel: (props) => (
+      <ImageUploadPanel
+        {...props}
+        storageAdapter={factoryStorageAdapter || props.storageAdapter}
+      />
+    ),
   };
 }
 
