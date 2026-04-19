@@ -33,7 +33,10 @@ export {
   imageUrlPlugin,
   linkPlugin,
   youtubePlugin,
+  referencePlugin,
+  glossaryTermPlugin,
   genericPlugins,
+  fullToolbar,
 } from './toolbar/plugins.jsx';
 
 // Adapters are imported directly from subpaths:

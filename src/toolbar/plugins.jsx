@@ -1,5 +1,10 @@
 import React, { useRef, useState } from 'react';
 import { extractYouTubeId } from '../shortcodes/youtube.js';
+import { referencePlugin } from './bibliography.jsx';
+import { glossaryTermPlugin } from './glossary.jsx';
+
+export { referencePlugin } from './bibliography.jsx';
+export { glossaryTermPlugin } from './glossary.jsx';
 
 /**
  * Generic toolbar plugins for EditableField.
@@ -175,4 +180,36 @@ export function genericPlugins(opts = {}) {
     linkPlugin(opts.link),
     youtubePlugin(opts.youtube),
   ];
+}
+
+/**
+ * Full 6-button toolbar shared by Engage and Learn.
+ *
+ * Order: IMAGE, REFERENCE, GLOSSARY TERM, LINK, IMAGE URL, YOUTUBE.
+ * Each group can be tuned via the options bag. If `bibliography.adapter`
+ * or `glossary.adapter` are omitted the corresponding button is skipped,
+ * because those panels need a persistence target to function.
+ *
+ * Usage:
+ *
+ *   fullToolbar({
+ *     bibliography: { adapter: engageBibliographyAdapter },
+ *     glossary:     { adapter: engageGlossaryAdapter },
+ *     // optional label/color/theme overrides per plugin
+ *   })
+ */
+export function fullToolbar(opts = {}) {
+  const toolbar = [imageUploadPlugin(opts.image)];
+  if (opts.bibliography && opts.bibliography.adapter) {
+    toolbar.push(referencePlugin(opts.bibliography));
+  }
+  if (opts.glossary && opts.glossary.adapter) {
+    toolbar.push(glossaryTermPlugin(opts.glossary));
+  }
+  toolbar.push(
+    linkPlugin(opts.link),
+    imageUrlPlugin(opts.imageUrl),
+    youtubePlugin(opts.youtube),
+  );
+  return toolbar;
 }
