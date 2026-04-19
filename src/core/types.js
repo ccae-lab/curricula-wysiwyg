@@ -32,14 +32,28 @@
  */
 
 /**
- * BibliographyAdapter
+ * BibliographyAdapter (0.3.0)
  *
  * Persists a reference (academic source) into a project's bibliography
- * store. The shape of the target table is project-specific: Engage uses
- * a rich schema (authors, year, title, doi, ...), Learn and Solving for
- * Zero use a compact { citation, annotation, year } shape. The adapter
- * hides that by accepting the UI's minimal input and writing whatever
- * columns the host project needs.
+ * store. The shape of the target table is project-specific; the adapter
+ * hides that.
+ *
+ * As of 0.3.0 the adapter grew three optional members so referencePlugin
+ * can dedupe against existing entries and enrich newly-created rows
+ * without duplicating logic per-site.
+ *
+ * @typedef {Object} BibliographyEntry
+ * @property {string}   id
+ * @property {string}  [citation_key]
+ * @property {string}  [authors]
+ * @property {number}  [year]
+ * @property {string}  [title]
+ * @property {string}  [doi]
+ * @property {string}  [doi_url]
+ * @property {string}  [url]
+ * @property {string}  [abstract]
+ * @property {string}  [annotation]
+ * @property {string}  [verification_status]
  *
  * @typedef {Object} BibliographyInput
  * @property {string} citation — full source line as the user typed it
@@ -49,11 +63,48 @@
  *
  * @typedef {Object} BibliographyResult
  * @property {string} [id]
- * @property {string} [citation_key] — short label suitable for inline insertion
+ * @property {string} [citation_key]
  * @property {string} [inlineInsertion] — adapter-controlled string to append to the draft
  *
+ * @typedef {Object} BibliographySearchQuery
+ * @property {string}  citation — the raw string the user typed
+ * @property {string} [doi]
+ * @property {string} [firstAuthor]
+ * @property {number} [year]
+ * @property {string} [title]
+ *
  * @typedef {Object} BibliographyAdapter
- * @property {(input: BibliographyInput) => Promise<BibliographyResult | void>} addReference
+ * @property {(input: BibliographyInput) => Promise<BibliographyResult | BibliographyEntry | void>} addReference
+ * @property {(q: BibliographySearchQuery) => Promise<BibliographyEntry[]>} [searchReferences]
+ * @property {(entry: BibliographyEntry) => string} [formatInline]
+ * @property {(id: string, patch: Partial<BibliographyEntry>) => Promise<BibliographyEntry | void>} [enrichReference]
+ */
+
+/**
+ * EnrichmentAdapter (0.3.0)
+ *
+ * Turns a raw citation string into structured metadata by calling an
+ * academic API (OpenAlex, Crossref, Semantic Scholar, ...) or an LLM
+ * provider. referencePlugin invokes it after a new row is created so
+ * the site can upgrade the row's authors / year / title / doi / abstract
+ * and flip verification_status to 'verified' when confidence is high.
+ *
+ * @typedef {Object} EnrichmentInput
+ * @property {string} citation
+ * @property {string} [doi]
+ *
+ * @typedef {Object} EnrichmentResult
+ * @property {string}  [doi]
+ * @property {string}  [url]
+ * @property {string[]|string} [authors]
+ * @property {number}  [year]
+ * @property {string}  [title]
+ * @property {string}  [abstract]
+ * @property {string}  [venue]
+ * @property {number}   matchConfidence — 0..1, plugin flips to verified at ≥ threshold
+ *
+ * @typedef {Object} EnrichmentAdapter
+ * @property {(input: EnrichmentInput) => Promise<EnrichmentResult | null>} enrich
  */
 
 /**

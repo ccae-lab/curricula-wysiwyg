@@ -39,6 +39,15 @@ export {
   fullToolbar,
 } from './toolbar/plugins.jsx';
 
+// Citation helpers (shared with adapters; testable without React)
+export {
+  parseAPA,
+  extractDoi,
+  doiToUrl,
+  firstAuthorSurname,
+  defaultFormatInline,
+} from './citations/helpers.js';
+
 // Adapters are imported directly from subpaths:
 //   import { createPostgRESTAdapter } from '@curricula/wysiwyg/adapters/postgrest'
 //   import { createSupabaseSDKAdapter } from '@curricula/wysiwyg/adapters/supabase-sdk'

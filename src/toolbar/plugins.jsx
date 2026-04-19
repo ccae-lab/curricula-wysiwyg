@@ -210,7 +210,12 @@ export function genericPlugins(opts = {}) {
 export function fullToolbar(opts = {}) {
   const toolbar = [imageUploadPlugin(opts.image)];
   if (opts.bibliography && opts.bibliography.adapter) {
-    toolbar.push(referencePlugin(opts.bibliography));
+    // Shallow-merge a top-level enrichmentAdapter into the bibliography opts
+    // so callers can pass { enrichmentAdapter } once at the fullToolbar level.
+    const bib = opts.enrichmentAdapter && !opts.bibliography.enrichmentAdapter
+      ? { ...opts.bibliography, enrichmentAdapter: opts.enrichmentAdapter }
+      : opts.bibliography;
+    toolbar.push(referencePlugin(bib));
   }
   if (opts.glossary && opts.glossary.adapter) {
     toolbar.push(glossaryTermPlugin(opts.glossary));
