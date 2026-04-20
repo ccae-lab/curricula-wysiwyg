@@ -73,11 +73,19 @@
  * @property {number} [year]
  * @property {string} [title]
  *
+ * @typedef {Object} BibliographyListOptions
+ * @property {number} [limit]
+ * @property {number} [offset]
+ * @property {string} [orderBy]
+ * @property {boolean} [descending]
+ *
  * @typedef {Object} BibliographyAdapter
  * @property {(input: BibliographyInput) => Promise<BibliographyResult | BibliographyEntry | void>} addReference
  * @property {(q: BibliographySearchQuery) => Promise<BibliographyEntry[]>} [searchReferences]
  * @property {(entry: BibliographyEntry) => string} [formatInline]
  * @property {(id: string, patch: Partial<BibliographyEntry>) => Promise<BibliographyEntry | void>} [enrichReference]
+ * @property {(opts?: BibliographyListOptions) => Promise<BibliographyEntry[]>} [listReferences]
+ * @property {(id: string, patch: Partial<BibliographyEntry>) => Promise<BibliographyEntry | void>} [updateReference]
  */
 
 /**

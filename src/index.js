@@ -18,6 +18,7 @@ export { default as EditableField } from './react/EditableField.jsx';
 export { default as EditBadge } from './react/EditBadge.jsx';
 export { default as EditorTray } from './react/EditorTray.jsx';
 export { default as CommentsPanel } from './react/CommentsPanel.jsx';
+export { default as BibliographyAdmin } from './react/BibliographyAdmin.jsx';
 
 // Shortcode rendering
 export {
