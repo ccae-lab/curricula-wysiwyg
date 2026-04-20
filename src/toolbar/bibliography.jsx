@@ -148,9 +148,60 @@ function ReferencePanel({
 
   async function useExisting(entry) {
     if (status === 'saving') return;
+    let resolved = entry;
+
+    // If the existing row is a legacy-style bibliography entry (only the
+    // free-text `citation` field, no structured authors/year/doi), try to
+    // enrich it on-demand so we can emit a proper APA link with a DOI
+    // hyperlink. Upgrade the stored row too, so this one-time cost isn't
+    // repeated for the next editor.
+    const needsEnrich = enrichmentAdapter
+      && typeof enrichmentAdapter.enrich === 'function'
+      && entry
+      && entry.citation
+      && (!entry.authors || !entry.year || !(entry.doi || entry.doi_url));
+    if (needsEnrich) {
+      setStatus('saving');
+      try {
+        const seedDoi = extractDoi(entry.citation) || entry.doi || entry.doi_url || undefined;
+        const enriched = await enrichmentAdapter.enrich({
+          citation: entry.citation,
+          doi: seedDoi,
+        });
+        if (enriched && typeof enriched === 'object') {
+          const confidence = Number(enriched.matchConfidence || 0);
+          const parsed = parseAPA(entry.citation);
+          const baseline = {
+            authors: entry.authors || parsed.authors,
+            year: entry.year || parsed.year,
+            title: entry.title || parsed.title,
+            source: entry.source || parsed.source,
+            doi: entry.doi || entry.doi_url || parsed.doi,
+          };
+          const patch = buildPatch(enriched, baseline, confidence, confidenceThreshold);
+          if (patch && entry.id && typeof adapter.enrichReference === 'function') {
+            try {
+              const updated = await adapter.enrichReference(entry.id, patch);
+              if (updated && typeof updated === 'object') resolved = updated;
+              else resolved = { ...entry, ...patch };
+            } catch (err) {
+              console.warn('[referencePlugin] enrichReference failed on existing row:', err);
+              resolved = { ...entry, ...patch };
+            }
+          } else if (patch) {
+            resolved = { ...entry, ...patch };
+          }
+        }
+      } catch (err) {
+        console.warn('[referencePlugin] enrich-on-pick failed:', err);
+      } finally {
+        setStatus('idle');
+      }
+    }
+
     const inline = insertInline
-      ? insertInline({ citation: citation.trim(), result: entry, existing: true })
-      : resolveFormatInline(entry);
+      ? insertInline({ citation: citation.trim(), result: resolved, existing: true })
+      : resolveFormatInline(resolved);
     if (inline) setDraft((d) => (d || '') + inline);
     resetAndClose();
   }

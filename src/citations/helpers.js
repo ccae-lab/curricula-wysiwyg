@@ -101,6 +101,26 @@ export function firstAuthorSurname(authors) {
  */
 export function defaultFormatInline(entry) {
   if (!entry) return '';
+
+  // Legacy-row rescue: older bibliography rows (Learn's historic schema)
+  // often have only the `citation` text field populated. Parse it inline
+  // so we can still produce a useful Author+Year label instead of the
+  // truncated-citation fallback.
+  const legacyParse = (entry.citation
+    && !entry.authors && !entry.year && !entry.title
+    && !entry.doi && !entry.doi_url)
+    ? parseAPA(entry.citation)
+    : null;
+  if (legacyParse) {
+    entry = {
+      ...entry,
+      authors: legacyParse.authors,
+      year: legacyParse.year,
+      title: legacyParse.title,
+      doi: legacyParse.doi,
+    };
+  }
+
   const surname = firstAuthorSurname(entry.authors);
   const year = entry.year || null;
   const href = doiToUrl(entry.doi_url || entry.doi) || entry.url || null;
