@@ -86,6 +86,7 @@
  * @property {(id: string, patch: Partial<BibliographyEntry>) => Promise<BibliographyEntry | void>} [enrichReference]
  * @property {(opts?: BibliographyListOptions) => Promise<BibliographyEntry[]>} [listReferences]
  * @property {(id: string, patch: Partial<BibliographyEntry>) => Promise<BibliographyEntry | void>} [updateReference]
+ * @property {(id: string) => Promise<void>} [deleteReference]
  */
 
 /**

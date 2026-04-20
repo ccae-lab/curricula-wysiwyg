@@ -145,6 +145,72 @@ export default function BibliographyAdmin({
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
 
+  function removeRow(id) {
+    setRows((prev) => prev.filter((r) => r.id !== id));
+    setRowState((prev) => { const next = { ...prev }; delete next[id]; return next; });
+  }
+
+  function toggleEdit(row) {
+    const current = rowState[row.id] || {};
+    if (current.editing) {
+      patchRowState(row.id, { editing: false, editDraft: null });
+      return;
+    }
+    patchRowState(row.id, {
+      editing: true,
+      editDraft: {
+        citation: row.citation || '',
+        authors: row.authors || '',
+        year: row.year || '',
+        doi_url: row.doi_url || row.doi || '',
+      },
+      status: 'idle',
+      error: null,
+    });
+  }
+
+  async function saveEditedFields(row) {
+    const state = rowState[row.id];
+    const draft = state?.editDraft;
+    if (!draft) return;
+    if (!adapter || typeof adapter.updateReference !== 'function') return;
+    const patch = {
+      citation: (draft.citation || '').trim() || null,
+      authors: (draft.authors || '').trim() || null,
+      year: draft.year ? Number(draft.year) : null,
+      doi_url: (draft.doi_url || '').trim() || null,
+      // Send doi too; adapters that route through views handle it.
+      doi: (draft.doi_url || '').trim() || null,
+    };
+    patchRowState(row.id, { status: 'saving' });
+    try {
+      const updated = await adapter.updateReference(row.id, patch);
+      const next = (updated && typeof updated === 'object') ? updated : { ...row, ...patch };
+      applyRowPatch(row.id, next);
+      patchRowState(row.id, {
+        editing: false,
+        editDraft: null,
+        status: 'done',
+        error: null,
+        annotation: next.annotation || '',
+        annotationDirty: false,
+      });
+    } catch (err) {
+      patchRowState(row.id, { status: 'error', error: err?.message || 'Save failed' });
+    }
+  }
+
+  async function confirmDelete(row) {
+    if (!adapter || typeof adapter.deleteReference !== 'function') return;
+    patchRowState(row.id, { status: 'saving' });
+    try {
+      await adapter.deleteReference(row.id);
+      removeRow(row.id);
+    } catch (err) {
+      patchRowState(row.id, { status: 'error', error: err?.message || 'Delete failed' });
+    }
+  }
+
   async function onSaveAnnotation(row) {
     if (!adapter || typeof adapter.updateReference !== 'function') return;
     const state = rowState[row.id] || {};
@@ -396,8 +462,100 @@ export default function BibliographyAdmin({
                     {state.status === 'enriching' ? 'CHECKING…' : 'ENRICH'}
                   </button>
                 )}
+                {typeof adapter.updateReference === 'function' && (
+                  <button
+                    onClick={() => toggleEdit(row)}
+                    style={{ background: state.editing ? t.card2 : 'none', color: t.muted, border: `1px solid ${t.border}`, borderRadius: 3, padding: '4px 10px', fontFamily: t.mono, fontSize: 9, cursor: 'pointer', letterSpacing: '0.08em' }}
+                  >
+                    {state.editing ? 'CANCEL' : 'EDIT'}
+                  </button>
+                )}
+                {typeof adapter.deleteReference === 'function' && (
+                  state.confirmDelete ? (
+                    <>
+                      <button
+                        onClick={() => confirmDelete(row)}
+                        style={{ background: t.bad, color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontFamily: t.mono, fontSize: 9, cursor: 'pointer', letterSpacing: '0.08em' }}
+                      >
+                        CONFIRM DELETE
+                      </button>
+                      <button
+                        onClick={() => patchRowState(row.id, { confirmDelete: false })}
+                        style={{ background: 'none', color: t.muted, border: `1px solid ${t.border}`, borderRadius: 3, padding: '4px 10px', fontFamily: t.mono, fontSize: 9, cursor: 'pointer', letterSpacing: '0.08em' }}
+                      >
+                        KEEP
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => patchRowState(row.id, { confirmDelete: true })}
+                      style={{ background: 'none', color: t.bad, border: `1px solid ${t.bad}55`, borderRadius: 3, padding: '4px 10px', fontFamily: t.mono, fontSize: 9, cursor: 'pointer', letterSpacing: '0.08em' }}
+                      title="Delete this reference (2-step confirm). Inline cites in page content remain — fix those by hand."
+                    >
+                      REMOVE
+                    </button>
+                  )
+                )}
               </div>
             </div>
+
+            {state.editing && (
+              <div style={{ marginTop: 8, background: t.card2, border: `1px solid ${t.border}`, borderRadius: 4, padding: 10 }}>
+                <div style={{ fontFamily: t.mono, fontSize: 9, color: t.muted, letterSpacing: '0.08em', marginBottom: 6 }}>
+                  EDIT FIELDS · fix bad DOIs, patch missing authors, etc.
+                </div>
+                <div style={{ display: 'grid', gap: 6, gridTemplateColumns: '1fr', marginBottom: 6 }}>
+                  <label style={{ fontFamily: t.mono, fontSize: 9, color: t.muted, letterSpacing: '0.06em' }}>CITATION
+                    <textarea
+                      rows={2}
+                      value={state.editDraft?.citation ?? ''}
+                      onChange={(e) => patchRowState(row.id, { editDraft: { ...state.editDraft, citation: e.target.value } })}
+                      style={{ width: '100%', background: t.card, border: `1px solid ${t.border}`, borderRadius: 3, padding: '6px 8px', color: t.ink, fontFamily: t.font, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box', marginTop: 2 }}
+                    />
+                  </label>
+                  <label style={{ fontFamily: t.mono, fontSize: 9, color: t.muted, letterSpacing: '0.06em' }}>AUTHORS
+                    <input
+                      value={state.editDraft?.authors ?? ''}
+                      onChange={(e) => patchRowState(row.id, { editDraft: { ...state.editDraft, authors: e.target.value } })}
+                      style={{ width: '100%', background: t.card, border: `1px solid ${t.border}`, borderRadius: 3, padding: '6px 8px', color: t.ink, fontFamily: t.font, fontSize: 13, outline: 'none', boxSizing: 'border-box', marginTop: 2 }}
+                    />
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 6 }}>
+                    <label style={{ fontFamily: t.mono, fontSize: 9, color: t.muted, letterSpacing: '0.06em' }}>YEAR
+                      <input
+                        type="number"
+                        value={state.editDraft?.year ?? ''}
+                        onChange={(e) => patchRowState(row.id, { editDraft: { ...state.editDraft, year: e.target.value } })}
+                        style={{ width: '100%', background: t.card, border: `1px solid ${t.border}`, borderRadius: 3, padding: '6px 8px', color: t.ink, fontFamily: t.font, fontSize: 13, outline: 'none', boxSizing: 'border-box', marginTop: 2 }}
+                      />
+                    </label>
+                    <label style={{ fontFamily: t.mono, fontSize: 9, color: t.muted, letterSpacing: '0.06em' }}>DOI / URL
+                      <input
+                        value={state.editDraft?.doi_url ?? ''}
+                        onChange={(e) => patchRowState(row.id, { editDraft: { ...state.editDraft, doi_url: e.target.value } })}
+                        placeholder="10.1234/xyz or https://doi.org/..."
+                        style={{ width: '100%', background: t.card, border: `1px solid ${t.border}`, borderRadius: 3, padding: '6px 8px', color: t.ink, fontFamily: t.font, fontSize: 13, outline: 'none', boxSizing: 'border-box', marginTop: 2 }}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button
+                    onClick={() => saveEditedFields(row)}
+                    disabled={state.status === 'saving'}
+                    style={{ background: t.good, color: '#fff', border: 'none', borderRadius: 3, padding: '4px 10px', fontFamily: t.mono, fontSize: 9, cursor: 'pointer', letterSpacing: '0.08em', opacity: state.status === 'saving' ? 0.5 : 1 }}
+                  >
+                    {state.status === 'saving' ? 'SAVING…' : 'SAVE CHANGES'}
+                  </button>
+                  <button
+                    onClick={() => toggleEdit(row)}
+                    style={{ background: 'none', color: t.muted, border: `1px solid ${t.border}`, borderRadius: 3, padding: '4px 10px', fontFamily: t.mono, fontSize: 9, cursor: 'pointer', letterSpacing: '0.08em' }}
+                  >
+                    CANCEL
+                  </button>
+                </div>
+              </div>
+            )}
 
             {state.enrichPreview && state.status === 'enrich-preview' && (
               <div style={{ marginTop: 8, background: `${t.accent}10`, border: `1px solid ${t.accent}44`, borderRadius: 4, padding: 10 }}>
