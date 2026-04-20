@@ -1,6 +1,6 @@
 {
   "name": "@curricula/wysiwyg",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Shared WYSIWYG content editing engine for curricula.dev projects",
   "type": "module",
   "main": "src/index.js",
@@ -9,6 +9,7 @@
     "./adapters/postgrest": "./src/adapters/postgrest.js",
     "./adapters/supabase-sdk": "./src/adapters/supabase-sdk.js",
     "./adapters/supabase-storage": "./src/adapters/supabase-storage.js",
+    "./adapters/supabase-comments": "./src/adapters/supabase-comments.js",
     "./presets/tailwind": "./src/presets/tailwind.js",
     "./presets/minimal": "./src/presets/minimal.js"
   },

@@ -17,6 +17,7 @@ export { default as EditableJSON } from './react/EditableJSON.jsx';
 export { default as EditableField } from './react/EditableField.jsx';
 export { default as EditBadge } from './react/EditBadge.jsx';
 export { default as EditorTray } from './react/EditorTray.jsx';
+export { default as CommentsPanel } from './react/CommentsPanel.jsx';
 
 // Shortcode rendering
 export {
