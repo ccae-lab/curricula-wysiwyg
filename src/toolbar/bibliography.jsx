@@ -73,8 +73,8 @@ function ReferencePanel({
     return defaultFormatInline(entry);
   };
 
-  /** Merge parsed + enriched into a row for preview / save. */
-  const composeEntry = () => {
+  /** Merge parsed + (optionally) enriched into a row for preview / save. */
+  const composeEntry = (enrichmentOverride) => {
     const parsed = parseAPA(citation);
     const doi = extractDoi(citation) || parsed.doi || null;
     const base = {
@@ -87,8 +87,12 @@ function ReferencePanel({
       url: null,
       abstract: null,
     };
-    if (!enrichment || !enrichment.result) return base;
-    const e = enrichment.result;
+    // Allow caller to pass `null` to explicitly skip enrichment merge.
+    const source = enrichmentOverride === undefined
+      ? (enrichment?.result || null)
+      : enrichmentOverride;
+    if (!source) return base;
+    const e = source;
     const authors = Array.isArray(e.authors) ? e.authors.join(', ') : (e.authors || null);
     return {
       ...base,
@@ -206,12 +210,15 @@ function ReferencePanel({
     resetAndClose();
   }
 
-  async function saveNew() {
+  async function saveNew(options) {
     if (!adapter) return;
+    const ignoreEnrichment = !!(options && options.ignoreEnrichment);
     setStatus('saving');
     try {
-      const composed = composeEntry();
-      const confidence = enrichment?.confidence || 0;
+      const composed = ignoreEnrichment
+        ? composeEntry(null)
+        : composeEntry();
+      const confidence = ignoreEnrichment ? 0 : (enrichment?.confidence || 0);
 
       // Add the row with everything we know upfront, so formatInline
       // works correctly whether or not a second enrichReference runs.
@@ -338,18 +345,32 @@ function ReferencePanel({
       {checked && enrichment?.result && (
         <div style={{ marginBottom: 8, border: `1px solid ${t.accent}44`, background: '#eef2ff', borderRadius: 4, padding: 8 }}>
           <div style={{ fontFamily: t.mono, fontSize: 9, color: t.accent, letterSpacing: '0.1em', marginBottom: 6 }}>
-            ENRICHED FROM OPENALEX · CONFIDENCE {(enrichment.confidence * 100).toFixed(0)}%
+            FRESH FROM OPENALEX · CONFIDENCE {(enrichment.confidence * 100).toFixed(0)}%
           </div>
-          <div style={{ fontFamily: t.font, fontSize: 13, color: t.ink, lineHeight: 1.4 }}>
-            <div><strong>{firstAuthorSurname(previewEntry.authors) || '—'}</strong>{previewEntry.year ? `, ${previewEntry.year}` : ''} · {previewEntry.title || previewEntry.citation}</div>
-            {previewEntry.source && <div style={{ color: t.muted, fontSize: 11, marginTop: 2 }}>{previewEntry.source}</div>}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <button
+              onClick={saveNew}
+              disabled={!canAct}
+              style={{ flex: '0 0 auto', background: t.accent, color: '#fff', border: 'none', borderRadius: 3, padding: '3px 8px', fontFamily: t.mono, fontSize: 9, cursor: canAct ? 'pointer' : 'default', letterSpacing: '0.08em', opacity: canAct ? 1 : 0.4 }}
+            >
+              {status === 'saving' ? 'SAVING…' : 'USE THIS'}
+            </button>
+            <div style={{ fontFamily: t.font, fontSize: 13, color: t.ink, lineHeight: 1.4, flex: 1 }}>
+              <div><strong>{firstAuthorSurname(previewEntry.authors) || '—'}</strong>{previewEntry.year ? `, ${previewEntry.year}` : ''} · {previewEntry.title || previewEntry.citation}</div>
+              {previewEntry.source && <div style={{ color: t.muted, fontSize: 11, marginTop: 2 }}>{previewEntry.source}</div>}
+              {previewEntry.doi && (
+                <div style={{ color: t.muted, fontSize: 11, marginTop: 2 }}>
+                  <a href={doiToUrl(previewEntry.doi)} target="_blank" rel="noopener noreferrer" style={{ color: t.accent }}>doi.org/{previewEntry.doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')}</a>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {checked && !enrichment?.result && (
         <div style={{ marginBottom: 8, fontFamily: t.mono, fontSize: 10, color: t.muted, letterSpacing: '0.05em' }}>
-          NO ENRICHMENT FOUND · WILL SAVE AS TYPED
+          NO OPENALEX MATCH · YOU CAN STILL ADD IT AS TYPED
         </div>
       )}
 
@@ -371,11 +392,11 @@ function ReferencePanel({
         )}
         {checked && (
           <button
-            onClick={saveNew}
+            onClick={() => saveNew({ ignoreEnrichment: !!enrichment?.result })}
             disabled={!canAct}
             style={{ background: t.good, border: 'none', borderRadius: 3, padding: '5px 14px', color: '#fff', fontFamily: t.mono, fontSize: 10, cursor: canAct ? 'pointer' : 'default', opacity: canAct ? 1 : 0.4 }}
           >
-            {status === 'saving' ? 'SAVING…' : 'SAVE REFERENCE'}
+            {status === 'saving' ? 'SAVING…' : (enrichment?.result ? 'ADD AS TYPED (IGNORE OPENALEX)' : 'ADD AS TYPED')}
           </button>
         )}
         {status === 'error' && (
