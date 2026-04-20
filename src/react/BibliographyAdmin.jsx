@@ -67,6 +67,8 @@ function displayRow(row) {
 export default function BibliographyAdmin({
   adapter,
   enrichmentAdapter,
+  annotationAdapter,
+  twinFinderAdapter,
   filters = DEFAULT_FILTERS,
   pageSize = 25,
   theme,
@@ -196,6 +198,47 @@ export default function BibliographyAdmin({
       });
     } catch (err) {
       patchRowState(row.id, { status: 'error', error: err?.message || 'Save failed' });
+    }
+  }
+
+  async function onFindTwins(row) {
+    if (!twinFinderAdapter || typeof twinFinderAdapter.findTwins !== 'function') return;
+    patchRowState(row.id, { status: 'twins-loading', twins: null, error: null });
+    try {
+      const merged = enrichEntryFromCitation(row);
+      const result = await twinFinderAdapter.findTwins({ entry: merged });
+      if (!result || (!result.seminal && !result.latest)) {
+        patchRowState(row.id, { status: 'idle', twins: { seminal: null, latest: null, empty: true } });
+        return;
+      }
+      patchRowState(row.id, { status: 'idle', twins: result, error: null });
+    } catch (err) {
+      patchRowState(row.id, { status: 'error', error: err?.message || 'Twin finder failed' });
+    }
+  }
+
+  async function onDraftAnnotation(row) {
+    if (!annotationAdapter || typeof annotationAdapter.draftAnnotation !== 'function') return;
+    patchRowState(row.id, { status: 'drafting', error: null });
+    try {
+      const merged = enrichEntryFromCitation(row);
+      const draft = await annotationAdapter.draftAnnotation({ entry: merged });
+      if (!draft || typeof draft !== 'string') {
+        patchRowState(row.id, { status: 'error', error: 'AI returned no draft' });
+        return;
+      }
+      const existing = rowState[row.id]?.annotation ?? row.annotation ?? '';
+      const next = existing && existing.trim().length > 0
+        ? `${existing.trim()}\n\n[AI draft]\n${draft.trim()}`
+        : draft.trim();
+      patchRowState(row.id, {
+        annotation: next,
+        annotationDirty: next !== (row.annotation || ''),
+        status: 'idle',
+        error: null,
+      });
+    } catch (err) {
+      patchRowState(row.id, { status: 'error', error: err?.message || 'AI draft failed' });
     }
   }
 
@@ -503,6 +546,16 @@ export default function BibliographyAdmin({
                     {state.status === 'enriching' ? 'CHECKING…' : 'ENRICH'}
                   </button>
                 )}
+                {twinFinderAdapter && (
+                  <button
+                    onClick={() => onFindTwins(row)}
+                    disabled={state.status === 'twins-loading' || state.status === 'saving'}
+                    title="Find seminal ancestor and latest descendant via OpenAlex."
+                    style={{ background: 'none', color: t.accent, border: `1px solid ${t.accent}66`, borderRadius: 3, padding: '4px 10px', fontFamily: t.mono, fontSize: 9, cursor: 'pointer', letterSpacing: '0.08em', opacity: state.status === 'twins-loading' ? 0.5 : 1 }}
+                  >
+                    {state.status === 'twins-loading' ? 'FINDING…' : 'TWINS'}
+                  </button>
+                )}
                 {typeof adapter.updateReference === 'function' && (
                   <button
                     onClick={() => toggleEdit(row)}
@@ -638,6 +691,33 @@ export default function BibliographyAdmin({
               </div>
             )}
 
+            {state.twins && (
+              <div style={{ marginTop: 8, background: `${t.accent}08`, border: `1px solid ${t.accent}44`, borderRadius: 4, padding: 10 }}>
+                <div style={{ fontFamily: t.mono, fontSize: 9, color: t.accent, letterSpacing: '0.08em', marginBottom: 6 }}>
+                  SEMINAL {'<>'} LATEST · via OpenAlex
+                </div>
+                {state.twins.empty && (
+                  <div style={{ fontFamily: t.mono, fontSize: 10, color: t.muted }}>
+                    No related works found.
+                  </div>
+                )}
+                {state.twins.seminal && (
+                  <TwinLine
+                    label="SEMINAL"
+                    twin={state.twins.seminal}
+                    theme={t}
+                  />
+                )}
+                {state.twins.latest && (
+                  <TwinLine
+                    label="LATEST"
+                    twin={state.twins.latest}
+                    theme={t}
+                  />
+                )}
+              </div>
+            )}
+
             <div style={{ marginTop: 8 }}>
               <div style={{ fontFamily: t.mono, fontSize: 9, color: t.muted, letterSpacing: '0.08em', marginBottom: 4 }}>
                 ANNOTATION
@@ -661,7 +741,7 @@ export default function BibliographyAdmin({
                   boxSizing: 'border-box',
                 }}
               />
-              <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => onSaveAnnotation(row)}
                   disabled={!state.annotationDirty || state.status === 'saving'}
@@ -679,6 +759,27 @@ export default function BibliographyAdmin({
                 >
                   {state.status === 'saving' ? 'SAVING…' : 'SAVE ANNOTATION'}
                 </button>
+                {annotationAdapter && (
+                  <button
+                    onClick={() => onDraftAnnotation(row)}
+                    disabled={state.status === 'drafting' || state.status === 'saving'}
+                    title="Draft a 2-3 sentence annotation with AI. You can edit before saving."
+                    style={{
+                      background: 'none',
+                      color: t.accent,
+                      border: `1px solid ${t.accent}66`,
+                      borderRadius: 3,
+                      padding: '4px 10px',
+                      fontFamily: t.mono,
+                      fontSize: 9,
+                      cursor: (state.status === 'drafting' || state.status === 'saving') ? 'default' : 'pointer',
+                      letterSpacing: '0.08em',
+                      opacity: (state.status === 'drafting' || state.status === 'saving') ? 0.5 : 1,
+                    }}
+                  >
+                    {state.status === 'drafting' ? 'DRAFTING…' : 'DRAFT WITH AI'}
+                  </button>
+                )}
                 {state.error && (
                   <span style={{ color: t.bad, fontFamily: t.mono, fontSize: 10 }}>{state.error}</span>
                 )}
@@ -712,6 +813,48 @@ export default function BibliographyAdmin({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function TwinLine({ label, twin, theme }) {
+  if (!twin) return null;
+  const authors = Array.isArray(twin.authors) ? twin.authors.join(', ') : (twin.authors || '');
+  const surname = firstAuthorSurname(authors) || '—';
+  const href = doiToUrl(twin.doi || twin.doi_url) || twin.url || null;
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
+      <span
+        style={{
+          flex: '0 0 auto',
+          fontFamily: theme.mono,
+          fontSize: 9,
+          color: theme.accent,
+          background: `${theme.accent}18`,
+          border: `1px solid ${theme.accent}44`,
+          borderRadius: 2,
+          padding: '2px 6px',
+          letterSpacing: '0.08em',
+        }}
+      >
+        {label}
+      </span>
+      <div style={{ fontFamily: theme.font, fontSize: 13, color: theme.ink, lineHeight: 1.4, flex: 1 }}>
+        <strong>{surname}</strong>
+        {twin.year ? `, ${twin.year}` : ''} — {twin.title || '—'}
+        {twin.venue && <span style={{ color: theme.muted, fontSize: 11 }}> · {twin.venue}</span>}
+        {href && (
+          <>
+            {' '}
+            <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: theme.accent, fontFamily: theme.mono, fontSize: 11 }}>
+              open ↗
+            </a>
+          </>
+        )}
+        {typeof twin.cited_by_count === 'number' && (
+          <span style={{ color: theme.muted, fontSize: 11, fontFamily: theme.mono }}> · {twin.cited_by_count} cites</span>
+        )}
+      </div>
     </div>
   );
 }

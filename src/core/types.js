@@ -117,6 +117,38 @@
  */
 
 /**
+ * AIAnnotationAdapter (0.6.0)
+ *
+ * Drafts a 2-3 sentence annotation for a bibliography entry using an LLM
+ * provider. Called from BibliographyAdmin (DRAFT AI button) and from the
+ * +REFERENCE panel in a future phase. Voice rules are injected at the
+ * prompt level by the adapter; the component is format-agnostic.
+ *
+ * @typedef {Object} AIAnnotationInput
+ * @property {BibliographyEntry} entry
+ * @property {string} [voiceRules] — optional extra guidance for the LLM
+ *
+ * @typedef {Object} AIAnnotationAdapter
+ * @property {(input: AIAnnotationInput) => Promise<string | null>} draftAnnotation
+ */
+
+/**
+ * TwinFinderAdapter (0.6.1)
+ *
+ * Given a bibliography entry with a DOI, returns the seminal ancestor
+ * (oldest, high-cited work this paper references) and the latest
+ * descendant (most recent work citing this paper). Used for
+ * "seminal <> latest" navigation in BibliographyAdmin.
+ *
+ * @typedef {Object} TwinResult
+ * @property {BibliographyEntry} [seminal]
+ * @property {BibliographyEntry} [latest]
+ *
+ * @typedef {Object} TwinFinderAdapter
+ * @property {(input: { entry: BibliographyEntry }) => Promise<TwinResult | null>} findTwins
+ */
+
+/**
  * GlossaryAdapter
  *
  * Persists a glossary term + definition. Same logic as BibliographyAdapter:
