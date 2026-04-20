@@ -317,28 +317,40 @@ function ReferencePanel({
           <div style={{ fontFamily: t.mono, fontSize: 9, color: t.good, letterSpacing: '0.1em', marginBottom: 6 }}>
             ALREADY IN THE BIBLIOGRAPHY · {matches.length} MATCH{matches.length === 1 ? '' : 'ES'}
           </div>
-          {matches.map((m) => (
-            <div key={m.id || (m.citation_key + m.title)} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 4 }}>
-              <button
-                onClick={() => useExisting(m)}
-                style={{ flex: '0 0 auto', background: t.good, color: '#fff', border: 'none', borderRadius: 3, padding: '3px 8px', fontFamily: t.mono, fontSize: 9, cursor: 'pointer', letterSpacing: '0.08em' }}
-              >
-                USE THIS
-              </button>
-              <div style={{ fontFamily: t.font, fontSize: 13, color: t.ink, lineHeight: 1.4 }}>
-                <strong>{firstAuthorSurname(m.authors) || m.citation_key || 'Source'}</strong>
-                {m.year ? `, ${m.year}` : ''} — {m.title || m.citation || '(no title)'}
-                {(m.doi_url || m.doi) && (
-                  <a
-                    href={doiToUrl(m.doi_url || m.doi)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ marginLeft: 6, color: t.accent, fontSize: 11 }}
-                  >doi</a>
-                )}
+          {matches.map((m) => {
+            // Rescue legacy rows where authors/year/title were never
+            // populated by parsing the free-text citation on-the-fly for
+            // display. Keeps the row's identity (we still pass `m` to
+            // useExisting so the real row gets enriched).
+            const needsParse = m && m.citation
+              && !m.authors && !m.year && !m.title
+              && !m.doi && !m.doi_url;
+            const display = needsParse ? parseAPA(m.citation) : m;
+            const surname = firstAuthorSurname(display.authors) || m.citation_key || null;
+            const titleText = display.title || m.citation || '(no title)';
+            return (
+              <div key={m.id || (m.citation_key + m.title)} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 4 }}>
+                <button
+                  onClick={() => useExisting(m)}
+                  style={{ flex: '0 0 auto', background: t.good, color: '#fff', border: 'none', borderRadius: 3, padding: '3px 8px', fontFamily: t.mono, fontSize: 9, cursor: 'pointer', letterSpacing: '0.08em' }}
+                >
+                  USE THIS
+                </button>
+                <div style={{ fontFamily: t.font, fontSize: 13, color: t.ink, lineHeight: 1.4 }}>
+                  <strong>{surname || '—'}</strong>
+                  {display.year ? `, ${display.year}` : ''} — {titleText}
+                  {(m.doi_url || m.doi || display.doi) && (
+                    <a
+                      href={doiToUrl(m.doi_url || m.doi || display.doi)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ marginLeft: 6, color: t.accent, fontSize: 11 }}
+                    >doi</a>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
