@@ -87,6 +87,29 @@ export function firstAuthorSurname(authors) {
 }
 
 /**
+ * Merge parsed APA data from `entry.citation` into the entry, preferring
+ * existing structured fields. Useful for rows that were imported with
+ * partial metadata (e.g. year present but title null, or citation_key
+ * set but authors missing). Returns a new object; does not mutate input.
+ *
+ * @param {Object} entry
+ * @returns {Object} entry with authors/year/title/doi filled in where they
+ *   were missing, based on parseAPA(entry.citation).
+ */
+export function enrichEntryFromCitation(entry) {
+  if (!entry || !entry.citation) return entry || {};
+  const parsed = parseAPA(entry.citation);
+  if (!parsed) return entry;
+  return {
+    ...entry,
+    authors: entry.authors || parsed.authors || null,
+    year: entry.year || parsed.year || null,
+    title: entry.title || parsed.title || null,
+    doi: entry.doi || entry.doi_url || parsed.doi || null,
+  };
+}
+
+/**
  * Canonical inline link for an entry. Exported so adapters can opt in to
  * the same formatting without re-implementing it.
  *
@@ -102,24 +125,11 @@ export function firstAuthorSurname(authors) {
 export function defaultFormatInline(entry) {
   if (!entry) return '';
 
-  // Legacy-row rescue: older bibliography rows (Learn's historic schema)
-  // often have only the `citation` text field populated. Parse it inline
-  // so we can still produce a useful Author+Year label instead of the
-  // truncated-citation fallback.
-  const legacyParse = (entry.citation
-    && !entry.authors && !entry.year && !entry.title
-    && !entry.doi && !entry.doi_url)
-    ? parseAPA(entry.citation)
-    : null;
-  if (legacyParse) {
-    entry = {
-      ...entry,
-      authors: legacyParse.authors,
-      year: legacyParse.year,
-      title: legacyParse.title,
-      doi: legacyParse.doi,
-    };
-  }
+  // Rescue partially-populated rows: parse the free-text citation and
+  // fill any missing author / year / title / doi before formatting. This
+  // covers legacy rows (all structured fields null) AND imports that
+  // only wrote some of them.
+  entry = enrichEntryFromCitation(entry);
 
   const surname = firstAuthorSurname(entry.authors);
   const year = entry.year || null;

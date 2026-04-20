@@ -48,6 +48,7 @@ export {
   doiToUrl,
   firstAuthorSurname,
   defaultFormatInline,
+  enrichEntryFromCitation,
 } from './citations/helpers.js';
 
 // Adapters are imported directly from subpaths:

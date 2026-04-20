@@ -1,6 +1,6 @@
 {
   "name": "@curricula/wysiwyg",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Shared WYSIWYG content editing engine for curricula.dev projects",
   "type": "module",
   "main": "src/index.js",

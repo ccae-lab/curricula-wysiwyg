@@ -4,6 +4,7 @@ import {
   firstAuthorSurname,
   doiToUrl,
   extractDoi,
+  enrichEntryFromCitation,
 } from '../citations/helpers.js';
 
 /**
@@ -54,14 +55,12 @@ const DEFAULT_FILTERS = [
 
 function displayRow(row) {
   if (!row) return null;
-  const needsParse = row.citation && !row.authors && !row.year && !row.title
-    && !row.doi && !row.doi_url;
-  const parsed = needsParse ? parseAPA(row.citation) : null;
+  const merged = enrichEntryFromCitation(row);
   return {
-    authors: row.authors || parsed?.authors || null,
-    year: row.year || parsed?.year || null,
-    title: row.title || parsed?.title || row.citation || '(no title)',
-    doi: row.doi || row.doi_url || parsed?.doi || null,
+    authors: merged.authors || null,
+    year: merged.year || null,
+    title: merged.title || row.citation || '(no title)',
+    doi: merged.doi || row.doi_url || null,
   };
 }
 
@@ -270,6 +269,37 @@ export default function BibliographyAdmin({
     }
   }
 
+  /**
+   * Rescue rows with partial metadata: for every filtered row whose
+   * `citation` text has more info than the structured columns, parse the
+   * citation and patch the missing fields. Never overwrites an existing
+   * value. No network call to OpenAlex (that's what the per-row ENRICH
+   * button is for).
+   */
+  async function rescueMissingFields() {
+    if (!adapter || typeof adapter.updateReference !== 'function') return;
+    for (const row of filtered) {
+      const state = rowState[row.id];
+      if (state?.status === 'saving' || state?.status === 'enriching') continue;
+      const merged = enrichEntryFromCitation(row);
+      const patch = {};
+      if (!row.authors && merged.authors) patch.authors = merged.authors;
+      if (!row.year && merged.year) patch.year = Number(merged.year);
+      if (!row.title && merged.title && merged.title !== row.citation) patch.title = merged.title;
+      if (!row.doi && !row.doi_url && merged.doi) patch.doi = merged.doi;
+      if (Object.keys(patch).length === 0) continue;
+      patchRowState(row.id, { status: 'saving' });
+      try {
+        const updated = await adapter.updateReference(row.id, patch);
+        const next = (updated && typeof updated === 'object') ? updated : { ...row, ...patch };
+        applyRowPatch(row.id, next);
+        patchRowState(row.id, { status: 'done' });
+      } catch (err) {
+        patchRowState(row.id, { status: 'error', error: err?.message || 'Save failed' });
+      }
+    }
+  }
+
   async function applyAllConfident() {
     if (!enrichmentAdapter) return;
     const targets = filtered.filter((r) => {
@@ -327,14 +357,25 @@ export default function BibliographyAdmin({
         <div style={{ fontFamily: t.mono, fontSize: 10, color: t.muted, letterSpacing: '0.1em' }}>
           {title.toUpperCase()} · {rows.length} ROWS
         </div>
-        {enrichmentAdapter && (
-          <button
-            onClick={applyAllConfident}
-            style={{ background: t.accent, color: '#fff', border: 'none', borderRadius: 3, padding: '6px 12px', fontFamily: t.mono, fontSize: 10, cursor: 'pointer', letterSpacing: '0.08em' }}
-          >
-            ENRICH ALL UNVERIFIED (CONFIDENT)
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {typeof adapter?.updateReference === 'function' && (
+            <button
+              onClick={rescueMissingFields}
+              title="Parse the citation text of rows with partial metadata and patch missing authors / year / title / DOI. No network call. Never overwrites existing values."
+              style={{ background: t.good, color: '#fff', border: 'none', borderRadius: 3, padding: '6px 12px', fontFamily: t.mono, fontSize: 10, cursor: 'pointer', letterSpacing: '0.08em' }}
+            >
+              RESCUE MISSING FIELDS
+            </button>
+          )}
+          {enrichmentAdapter && (
+            <button
+              onClick={applyAllConfident}
+              style={{ background: t.accent, color: '#fff', border: 'none', borderRadius: 3, padding: '6px 12px', fontFamily: t.mono, fontSize: 10, cursor: 'pointer', letterSpacing: '0.08em' }}
+            >
+              ENRICH ALL UNVERIFIED (CONFIDENT)
+            </button>
+          )}
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>

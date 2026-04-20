@@ -5,6 +5,7 @@ import {
   firstAuthorSurname,
   doiToUrl,
   defaultFormatInline,
+  enrichEntryFromCitation,
 } from '../citations/helpers.js';
 
 /**
@@ -318,14 +319,11 @@ function ReferencePanel({
             ALREADY IN THE BIBLIOGRAPHY · {matches.length} MATCH{matches.length === 1 ? '' : 'ES'}
           </div>
           {matches.map((m) => {
-            // Rescue legacy rows where authors/year/title were never
-            // populated by parsing the free-text citation on-the-fly for
-            // display. Keeps the row's identity (we still pass `m` to
-            // useExisting so the real row gets enriched).
-            const needsParse = m && m.citation
-              && !m.authors && !m.year && !m.title
-              && !m.doi && !m.doi_url;
-            const display = needsParse ? parseAPA(m.citation) : m;
+            // Fill any missing authors/year/title/doi from the free-text
+            // citation on-the-fly for display. Keeps the row's identity
+            // (we still pass `m` to useExisting so the real row gets
+            // enriched).
+            const display = enrichEntryFromCitation(m);
             const surname = firstAuthorSurname(display.authors) || m.citation_key || null;
             const titleText = display.title || m.citation || '(no title)';
             return (
