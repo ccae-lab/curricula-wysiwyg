@@ -6,6 +6,7 @@ import {
   extractDoi,
   enrichEntryFromCitation,
 } from '../citations/helpers.js';
+import AITransparencyPanel from './AITransparencyPanel.jsx';
 
 /**
  * BibliographyAdmin (0.5.0)
@@ -69,6 +70,7 @@ export default function BibliographyAdmin({
   enrichmentAdapter,
   annotationAdapter,
   twinFinderAdapter,
+  transparency,
   filters = DEFAULT_FILTERS,
   pageSize = 25,
   theme,
@@ -396,6 +398,14 @@ export default function BibliographyAdmin({
 
   return (
     <div style={{ background: t.bg, borderRadius: 6, padding: 16, fontFamily: t.font, color: t.ink }}>
+      {transparency && (
+        <AITransparencyPanel
+          intro={transparency.intro}
+          features={transparency.features}
+          frameworks={transparency.frameworks}
+          theme={t}
+        />
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
         <div style={{ fontFamily: t.mono, fontSize: 10, color: t.muted, letterSpacing: '0.1em' }}>
           {title.toUpperCase()} · {rows.length} ROWS

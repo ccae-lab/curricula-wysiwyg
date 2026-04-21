@@ -19,6 +19,12 @@ export { default as EditBadge } from './react/EditBadge.jsx';
 export { default as EditorTray } from './react/EditorTray.jsx';
 export { default as CommentsPanel } from './react/CommentsPanel.jsx';
 export { default as BibliographyAdmin } from './react/BibliographyAdmin.jsx';
+export { default as AITransparencyPanel } from './react/AITransparencyPanel.jsx';
+export {
+  buildBibliographyAdminTransparency,
+  BIBLIOGRAPHY_ADMIN_FEATURES_BASE,
+  FRAMEWORK_REFS,
+} from './transparency/bibliographyAdminTransparency.js';
 
 // Shortcode rendering
 export {
