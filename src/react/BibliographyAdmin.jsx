@@ -71,6 +71,7 @@ export default function BibliographyAdmin({
   annotationAdapter,
   twinFinderAdapter,
   transparency,
+  onError,
   filters = DEFAULT_FILTERS,
   pageSize = 25,
   theme,
@@ -85,6 +86,14 @@ export default function BibliographyAdmin({
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [rowState, setRowState] = useState({}); // id -> { annotation, annotationDirty, status, enrichPreview }
+  const [banner, setBanner] = useState(null); // { kind: 'error'|'warning'|'info', message, detail? }
+
+  /** Centralised error surface: show a banner + bubble to the host via onError. */
+  function surfaceError({ operation, rowId, error, detail }) {
+    const message = `${operation} failed${rowId ? ` on row ${String(rowId).slice(0, 8)}…` : ''}. ${error}`;
+    setBanner({ kind: 'error', message, detail });
+    try { onError?.({ operation, rowId, error, detail }); } catch { /* host handler must not break admin */ }
+  }
 
   useEffect(() => {
     if (!adapter || typeof adapter.listReferences !== 'function') {
@@ -224,23 +233,44 @@ export default function BibliographyAdmin({
     patchRowState(row.id, { status: 'drafting', error: null });
     try {
       const merged = enrichEntryFromCitation(row);
-      const draft = await annotationAdapter.draftAnnotation({ entry: merged });
+      const result = await annotationAdapter.draftAnnotation({ entry: merged });
+      // Adapter may return a string OR { annotation, model, provider, detail }.
+      const draft = typeof result === 'string' ? result : result?.annotation;
+      const provider = typeof result === 'object' ? result?.provider : null;
+      const model = typeof result === 'object' ? result?.model : null;
       if (!draft || typeof draft !== 'string') {
-        patchRowState(row.id, { status: 'error', error: 'AI returned no draft' });
+        const reason = 'AI returned no draft';
+        patchRowState(row.id, { status: 'error', error: reason });
+        surfaceError({ operation: 'DRAFT WITH AI', rowId: row.id, error: reason });
         return;
       }
       const existing = rowState[row.id]?.annotation ?? row.annotation ?? '';
+      const label = provider ? `[AI draft · ${provider}${model ? ` / ${model}` : ''}]` : '[AI draft]';
       const next = existing && existing.trim().length > 0
-        ? `${existing.trim()}\n\n[AI draft]\n${draft.trim()}`
+        ? `${existing.trim()}\n\n${label}\n${draft.trim()}`
         : draft.trim();
       patchRowState(row.id, {
         annotation: next,
         annotationDirty: next !== (row.annotation || ''),
         status: 'idle',
         error: null,
+        lastProvider: provider,
       });
+      if (typeof result === 'object' && result?.failover) {
+        setBanner({
+          kind: 'warning',
+          message: `Gemini was throttled, used ${provider || 'fallback'} instead. Draft still landed.`,
+        });
+      }
     } catch (err) {
-      patchRowState(row.id, { status: 'error', error: err?.message || 'AI draft failed' });
+      const msg = err?.message || 'AI draft failed';
+      patchRowState(row.id, { status: 'error', error: msg });
+      surfaceError({
+        operation: 'DRAFT WITH AI',
+        rowId: row.id,
+        error: msg,
+        detail: err?.detail || err?.attempts || null,
+      });
     }
   }
 
@@ -396,8 +426,67 @@ export default function BibliographyAdmin({
     );
   }
 
+  const bannerColors = {
+    error: { bg: `${t.bad}14`, border: t.bad, ink: t.bad },
+    warning: { bg: `${t.warn}14`, border: t.warn, ink: t.warn },
+    info: { bg: `${t.accent}14`, border: t.accent, ink: t.accent },
+  };
+
   return (
     <div style={{ background: t.bg, borderRadius: 6, padding: 16, fontFamily: t.font, color: t.ink }}>
+      {banner && (
+        <div
+          role="alert"
+          style={{
+            marginBottom: 12,
+            padding: '10px 12px',
+            background: bannerColors[banner.kind]?.bg || bannerColors.info.bg,
+            border: `1px solid ${bannerColors[banner.kind]?.border || bannerColors.info.border}44`,
+            borderLeft: `3px solid ${bannerColors[banner.kind]?.border || bannerColors.info.border}`,
+            borderRadius: 4,
+            fontSize: 13,
+            lineHeight: 1.5,
+            color: t.ink,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <span
+              style={{
+                fontFamily: t.mono,
+                fontSize: 9,
+                letterSpacing: '0.1em',
+                padding: '2px 6px',
+                borderRadius: 2,
+                background: `${bannerColors[banner.kind]?.border || t.accent}14`,
+                color: bannerColors[banner.kind]?.ink || t.accent,
+                border: `1px solid ${bannerColors[banner.kind]?.border || t.accent}44`,
+                flex: '0 0 auto',
+              }}
+            >
+              {banner.kind.toUpperCase()}
+            </span>
+            <div style={{ flex: 1 }}>
+              {banner.message}
+              {banner.detail && (
+                <details style={{ marginTop: 4, fontSize: 11, fontFamily: t.mono, color: t.muted }}>
+                  <summary style={{ cursor: 'pointer' }}>Technical detail</summary>
+                  <pre style={{ whiteSpace: 'pre-wrap', margin: '4px 0 0', fontSize: 10 }}>
+                    {typeof banner.detail === 'string' ? banner.detail : JSON.stringify(banner.detail, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setBanner(null)}
+              aria-label="Dismiss"
+              style={{ background: 'none', border: 'none', color: t.muted, cursor: 'pointer', fontFamily: t.mono, fontSize: 11, flex: '0 0 auto' }}
+            >
+              DISMISS
+            </button>
+          </div>
+        </div>
+      )}
       {transparency && (
         <AITransparencyPanel
           intro={transparency.intro}
