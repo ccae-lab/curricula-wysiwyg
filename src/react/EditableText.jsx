@@ -19,7 +19,10 @@ import EditBadge from './EditBadge.jsx';
  * @param {string} [props.fallback='']
  * @param {string|React.ElementType} [props.as='span'] - wrapper tag
  * @param {string} [props.className='']
- * @param {boolean} [props.multiline=false]
+ * @param {boolean} [props.multiline] - force a textarea or force an input.
+ *   Left off, the editor decides from the text: anything past 80
+ *   characters, or carrying a line break, opens as a textarea sized to
+ *   the passage.
  * @param {string} [props.placeholder]
  * @param {string} [props.help] - tooltip on the pencil icon ("what is this block for?")
  * @param {Object} [props.classNames] - slots: wrapper, input, textarea, pencilButton
@@ -31,7 +34,7 @@ export default function EditableText({
   fallback = '',
   as: Tag = 'span',
   className = '',
-  multiline = false,
+  multiline,
   placeholder,
   help,
   classNames = {},
@@ -56,6 +59,27 @@ export default function EditableText({
     setDraft(null);
   };
 
+  // The editor sizes itself to the text. Passing multiline decides it
+  // outright; otherwise a passage that runs past a line, or carries one
+  // of its own, opens as a textarea. Callers were having to remember the
+  // prop, and a 300-character paragraph that forgot it opened in a
+  // single-line input about six words wide.
+  const asTextarea = multiline === undefined
+    ? (display.length > 80 || display.includes('\n'))
+    : multiline;
+
+  // Rows follow the length, so a long passage opens showing most of
+  // itself. Roughly 90 characters to a line at this width. Measured on
+  // the stored text, so the box holds still while the steward types and
+  // any manual resize survives.
+  const rows = Math.min(16, Math.max(3, Math.ceil(display.length / 90) + 1));
+
+  // A textarea needs a block wrapper: the default wrapper is inline-flex,
+  // which would shrink it back to its content.
+  const wrapperStyle = asTextarea
+    ? { display: 'block', width: '100%', position: 'relative' }
+    : (classNames.wrapper ? undefined : { display: 'inline-flex', alignItems: 'baseline', gap: 0, position: 'relative' });
+
   const editor = draft === null ? (
     <>
       <Tag className={className} {...rest}>{display}</Tag>
@@ -77,18 +101,24 @@ export default function EditableText({
         <Pencil style={{ width: 14, height: 14 }} />
       </button>
     </>
-  ) : multiline ? (
+  ) : asTextarea ? (
     <textarea
       value={draft}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => { if (e.key === 'Escape') setDraft(null); }}
       placeholder={placeholder}
-      rows={3}
+      rows={rows}
       className={classNames.textarea || ''}
-      style={classNames.textarea ? undefined : {
-        width: '100%', border: '1px solid #a5b4fc', background: '#eef2ff',
-        color: 'inherit', padding: 4, fontSize: 'inherit',
+      // Width and height ride on the element even when a preset supplies
+      // the class, because the class carries colour and border and has no
+      // way to know how long this particular passage is.
+      style={{
+        width: '100%', minWidth: 0, resize: 'vertical', lineHeight: 1.5,
+        ...(classNames.textarea ? {} : {
+          border: '1px solid #a5b4fc', background: '#eef2ff',
+          color: 'inherit', padding: 4, fontSize: 'inherit',
+        }),
       }}
       autoFocus
     />
@@ -102,10 +132,16 @@ export default function EditableText({
         if (e.key === 'Escape') setDraft(null);
       }}
       placeholder={placeholder}
+      // Short text still gets an editor as wide as the words in it,
+      // with room to type past the end.
+      size={Math.min(80, Math.max(12, display.length + 8))}
       className={classNames.input || ''}
-      style={classNames.input ? undefined : {
-        border: '1px solid #a5b4fc', background: '#eef2ff',
-        color: 'inherit', padding: '0 4px', fontSize: 'inherit',
+      style={{
+        maxWidth: '100%',
+        ...(classNames.input ? {} : {
+          border: '1px solid #a5b4fc', background: '#eef2ff',
+          color: 'inherit', padding: '0 4px', fontSize: 'inherit',
+        }),
       }}
       autoFocus
     />
@@ -115,7 +151,7 @@ export default function EditableText({
     <span
       className={classNames.wrapper || ''}
       data-editable-key={blockKey}
-      style={classNames.wrapper ? undefined : { display: 'inline-flex', alignItems: 'baseline', gap: 0, position: 'relative' }}
+      style={wrapperStyle}
     >
       {editor}
       <EditBadge isDirty={isDirty} hasOverride={hasOverride} onReset={drop} onClear={clear} classNames={badgeClassNames} />
