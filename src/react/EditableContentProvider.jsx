@@ -43,6 +43,44 @@ export function EditableContentProvider({
   const fetchedAtRef = useRef(0);
   const scopeKeyRef = useRef(null);
 
+  // Live register of the editable blocks currently mounted under this
+  // provider. Without it the tray can see the scope and the staged
+  // count but has no way to know whether the page carries a single
+  // editable field, so its empty state has to guess. On a site where
+  // most routes carry no instrumented text, that guess reads as a
+  // broken editor: the tray says "look for the pencil" on a page that
+  // has no pencil to find. Each primitive registers on mount through
+  // useEditableContent and drops out on unmount.
+  //
+  // Keys are refcounted because a wrapper component may read the same
+  // block twice (once to decide how to render, once inside the shared
+  // primitive it delegates to), and both reads are legitimate.
+  const registryRef = useRef(new Map());
+  const [registryVersion, setRegistryVersion] = useState(0);
+
+  const registerBlock = useCallback((key, type) => {
+    const reg = registryRef.current;
+    const existing = reg.get(key);
+    if (existing) existing.count += 1;
+    else reg.set(key, { type, count: 1 });
+    setRegistryVersion((v) => v + 1);
+
+    return () => {
+      const entry = reg.get(key);
+      if (!entry) return;
+      entry.count -= 1;
+      if (entry.count <= 0) reg.delete(key);
+      setRegistryVersion((v) => v + 1);
+    };
+  }, []);
+
+  const registeredBlocks = useMemo(
+    () => Array.from(registryRef.current.entries())
+      .map(([key, entry]) => ({ key, type: entry.type }))
+      .sort((a, b) => a.key.localeCompare(b.key)),
+    [registryVersion],
+  );
+
   // Stable scope key for dependency tracking
   const scopeKey = JSON.stringify(scope);
 
@@ -145,6 +183,10 @@ export function EditableContentProvider({
     dirtyCount: Object.keys(dirty).length,
     storageAdapter: storageAdapter || null,
 
+    registerBlock,
+    registeredBlocks,
+    registeredCount: registeredBlocks.length,
+
     stageBlock: (key, type, value) => {
       setDirty((d) => ({ ...d, [key]: { type, value } }));
     },
@@ -159,7 +201,7 @@ export function EditableContentProvider({
     clearOverride,
     saveAll,
     isSaving,
-  }), [scope, scopeLabel, canEdit, isEditing, isLoading, saved, dirty, lastError, isSaving, storageAdapter, saveAll, clearOverride]);
+  }), [scope, scopeLabel, canEdit, isEditing, isLoading, saved, dirty, lastError, isSaving, storageAdapter, saveAll, clearOverride, registerBlock, registeredBlocks]);
 
   return (
     <EditableContentContext.Provider value={value}>
@@ -174,6 +216,18 @@ export function EditableContentProvider({
  */
 export function useEditableContent(blockKey, fallback, type = 'text') {
   const ctx = useContext(EditableContentContext);
+
+  // Announce this block to the provider for as long as it is mounted,
+  // so the tray can report what the page actually offers. The effect
+  // runs unconditionally to keep hook order stable; the guards live
+  // inside it, since a component may render without a provider or
+  // without a key.
+  const registerBlock = ctx?.registerBlock;
+  useEffect(() => {
+    if (!registerBlock || !blockKey) return undefined;
+    return registerBlock(blockKey, type);
+  }, [registerBlock, blockKey, type]);
+
   if (!ctx || !blockKey) return { value: fallback, isEditing: false, canEdit: false };
 
   const staged = ctx.dirty[blockKey];

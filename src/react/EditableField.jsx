@@ -107,6 +107,7 @@ function ProviderBackedField({
 
   return (
     <FieldShell
+      blockKey={blockKey}
       displayValue={value}
       isEditing={isEditing}
       canEdit={canEdit}
@@ -166,6 +167,7 @@ function CallbackBackedField({
 // ---------------------------------------------------------------------------
 
 function FieldShell({
+  blockKey,
   displayValue,
   isEditing,
   canEdit,
@@ -201,6 +203,7 @@ function FieldShell({
     return (
       <Tag
         className={`${classNames.wrapper || ''} ${className || ''}`.trim()}
+        data-editable-key={blockKey}
         style={classNames.wrapper ? undefined : { position: 'relative', ...style }}
       >
         <DisplayContent

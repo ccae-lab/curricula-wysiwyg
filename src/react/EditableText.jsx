@@ -44,8 +44,11 @@ export default function EditableText({
 
   const display = typeof value === 'string' ? value : value?.text ?? String(value ?? '');
 
+  // data-editable-key marks the block in the DOM whether or not edit
+  // mode is on, so a steward can be shown where the editable passages
+  // are before deciding to edit anything.
   if (!isEditing || !canEdit) {
-    return <Tag className={className} {...rest}>{display}</Tag>;
+    return <Tag className={className} data-editable-key={blockKey} {...rest}>{display}</Tag>;
   }
 
   const commit = () => {
@@ -61,12 +64,17 @@ export default function EditableText({
         onClick={() => setDraft(display)}
         className={classNames.pencilButton || ''}
         style={classNames.pencilButton ? undefined : {
-          marginLeft: 4, display: 'inline-flex', alignItems: 'center',
+          marginLeft: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          // 24x24 hit area, the WCAG 2.2 Target Size (Minimum) 2.5.8 floor
+          // for a control that sits inline in a sentence. The glyph stays
+          // small enough not to disturb the line box.
+          minWidth: 24, minHeight: 24,
           fontSize: 10, color: '#4338ca', background: 'none', border: 'none', cursor: 'pointer',
         }}
+        aria-label={help ? `Edit: ${help}` : `Edit this block (${blockKey})`}
         title={help ? `${help} (click to edit)` : 'Click to edit this block'}
       >
-        <Pencil style={{ width: 12, height: 12 }} />
+        <Pencil style={{ width: 14, height: 14 }} />
       </button>
     </>
   ) : multiline ? (
@@ -106,6 +114,7 @@ export default function EditableText({
   return (
     <span
       className={classNames.wrapper || ''}
+      data-editable-key={blockKey}
       style={classNames.wrapper ? undefined : { display: 'inline-flex', alignItems: 'baseline', gap: 0, position: 'relative' }}
     >
       {editor}
