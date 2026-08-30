@@ -2,17 +2,17 @@ import React from 'react';
 import { RotateCcw, Trash2 } from 'lucide-react';
 
 /**
- * EditBadge — coloured dot + reset/clear buttons for edit state.
+ * EditBadge – coloured dot + reset/clear buttons for edit state.
  *
  * Accepts classNames slots so consumers can style with Tailwind, inline
  * styles, or any other approach. Falls back to bare-minimum inline styles
  * when no classNames are provided.
  *
  * @param {Object} props
- * @param {boolean} props.isDirty — unsaved local edit
- * @param {boolean} props.hasOverride — saved override exists
- * @param {() => void} props.onReset — drop unsaved edit
- * @param {() => void} props.onClear — remove saved override
+ * @param {boolean} props.isDirty – unsaved local edit
+ * @param {boolean} props.hasOverride – saved override exists
+ * @param {() => void} props.onReset – drop unsaved edit
+ * @param {() => void} props.onClear – remove saved override
  * @param {Object} [props.classNames]
  * @param {string} [props.classNames.wrapper]
  * @param {string} [props.classNames.dot]

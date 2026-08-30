@@ -18,22 +18,22 @@ import {
  *   2. If existing matches surface, the user clicks USE THIS to insert
  *      a formatted link and skip the write.
  *   3. If enrichment returned metadata, the preview card shows the
- *      proposed "Author, Year — Title" plus the inline link the user is
+ *      proposed "Author, Year – Title" plus the inline link the user is
  *      about to drop. User confirms with SAVE, which calls `addReference`
  *      with the enriched fields merged in (so the row lands fully-formed
  *      on first write) and then `enrichReference` if any more fields
  *      came back. No second network dance post-write.
  *   4. If nothing enriched (confidence too low or no match), SAVE still
- *      works — the raw citation is saved, and the inline format falls
+ *      works – the raw citation is saved, and the inline format falls
  *      back to DOI / title / citation (see defaultFormatInline).
  *
  * Factory options:
  *   adapter               BibliographyAdapter (required)
  *   enrichmentAdapter?    EnrichmentAdapter (optional)
  *   label?, color?, theme?
- *   insertInline?         ({ citation, result }) => string — overrides default link
- *   confidenceThreshold?  default 0.7 — minimum enrich confidence to flip to verified
- *   formatInline?         (entry) => string — overrides adapter.formatInline and helpers default
+ *   insertInline?         ({ citation, result }) => string – overrides default link
+ *   confidenceThreshold?  default 0.7 – minimum enrich confidence to flip to verified
+ *   formatInline?         (entry) => string – overrides adapter.formatInline and helpers default
  */
 
 function ReferencePanel({
@@ -335,8 +335,8 @@ function ReferencePanel({
                   USE THIS
                 </button>
                 <div style={{ fontFamily: t.font, fontSize: 13, color: t.ink, lineHeight: 1.4 }}>
-                  <strong>{surname || '—'}</strong>
-                  {display.year ? `, ${display.year}` : ''} — {titleText}
+                  <strong>{surname || '–'}</strong>
+                  {display.year ? `, ${display.year}` : ''} – {titleText}
                   {(m.doi_url || m.doi || display.doi) && (
                     <a
                       href={doiToUrl(m.doi_url || m.doi || display.doi)}
@@ -366,7 +366,7 @@ function ReferencePanel({
               {status === 'saving' ? 'SAVING…' : 'USE THIS'}
             </button>
             <div style={{ fontFamily: t.font, fontSize: 13, color: t.ink, lineHeight: 1.4, flex: 1 }}>
-              <div><strong>{firstAuthorSurname(previewEntry.authors) || '—'}</strong>{previewEntry.year ? `, ${previewEntry.year}` : ''} · {previewEntry.title || previewEntry.citation}</div>
+              <div><strong>{firstAuthorSurname(previewEntry.authors) || '–'}</strong>{previewEntry.year ? `, ${previewEntry.year}` : ''} · {previewEntry.title || previewEntry.citation}</div>
               {previewEntry.source && <div style={{ color: t.muted, fontSize: 11, marginTop: 2 }}>{previewEntry.source}</div>}
               {previewEntry.doi && (
                 <div style={{ color: t.muted, fontSize: 11, marginTop: 2 }}>

@@ -3,7 +3,7 @@ import { Pencil, Save, Loader2, AlertTriangle } from 'lucide-react';
 import { useEditorTray } from './EditableContentProvider.jsx';
 
 /**
- * EditorTray — floating panel for content editors.
+ * EditorTray – floating panel for content editors.
  *
  * Place inside an EditableContentProvider. When the current user can edit,
  * the tray pins to the bottom-right and offers:
@@ -13,7 +13,7 @@ import { useEditorTray } from './EditableContentProvider.jsx';
  *
  * Renders nothing outside a provider or for non-editors.
  *
- * @param {Object} [props.classNames] — slots: panel, header, headerTitle,
+ * @param {Object} [props.classNames] – slots: panel, header, headerTitle,
  *   toggleButton, body, scopeLabel, countLabel, blockList, blockItem,
  *   saveButton, errorMessage
  */

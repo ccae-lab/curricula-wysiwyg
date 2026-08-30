@@ -1,18 +1,18 @@
 /**
- * PostgREST adapter — for projects using raw fetch against Supabase REST.
+ * PostgREST adapter – for projects using raw fetch against Supabase REST.
  *
  * Used by engage.curricula.dev which talks to content_blocks via PostgREST
  * with custom auth token extraction.
  *
  * @param {Object} config
- * @param {string} config.supabaseUrl — e.g. 'https://xxx.supabase.co'
- * @param {string} config.supabaseAnonKey — public anon key
- * @param {string} config.tableName — e.g. 'content_blocks'
- * @param {() => string} config.getAccessToken — returns JWT or anon key
- * @param {string} config.scopeColumn — e.g. 'page_slug'
- * @param {(scope: Object) => string} config.scopeValue — extracts the scope value
+ * @param {string} config.supabaseUrl – e.g. 'https://xxx.supabase.co'
+ * @param {string} config.supabaseAnonKey – public anon key
+ * @param {string} config.tableName – e.g. 'content_blocks'
+ * @param {() => string} config.getAccessToken – returns JWT or anon key
+ * @param {string} config.scopeColumn – e.g. 'page_slug'
+ * @param {(scope: Object) => string} config.scopeValue – extracts the scope value
  * @param {string} [config.blockKeyColumn='block_key']
- * @param {string} [config.onConflictColumns] — e.g. 'page_slug,block_key'
+ * @param {string} [config.onConflictColumns] – e.g. 'page_slug,block_key'
  *
  * @returns {import('../core/types').PersistenceAdapter}
  */

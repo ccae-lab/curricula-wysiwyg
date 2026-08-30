@@ -4,7 +4,7 @@ import { useEditableBlock } from './EditableContentProvider.jsx';
 import EditBadge from './EditBadge.jsx';
 
 /**
- * EditableLink — inline link editor (label + href).
+ * EditableLink – inline link editor (label + href).
  */
 
 export default function EditableLink({

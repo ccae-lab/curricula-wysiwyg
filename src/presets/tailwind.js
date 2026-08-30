@@ -1,5 +1,5 @@
 /**
- * Tailwind preset — Engage/Bauhaus design system classNames.
+ * Tailwind preset – Engage/Bauhaus design system classNames.
  *
  * Import and spread into the classNames prop of each component
  * to restore the original Engage styling.

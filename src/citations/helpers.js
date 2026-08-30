@@ -1,7 +1,7 @@
 /**
  * Citation parsing helpers shared across the bibliography plugin,
  * adapters, and any host-side code that needs to reason about APA-ish
- * strings. Pure functions, no React, no fetch — safe to unit-test.
+ * strings. Pure functions, no React, no fetch – safe to unit-test.
  */
 
 /**

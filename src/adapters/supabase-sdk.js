@@ -1,23 +1,23 @@
 /**
- * Supabase SDK adapter — for projects using supabase.from() calls.
+ * Supabase SDK adapter – for projects using supabase.from() calls.
  *
  * Used by learn.curricula.dev (Solving for Zero) which stores content
  * overrides in a table with composite key columns.
  *
- * @param {Object} supabase — initialised Supabase client
+ * @param {Object} supabase – initialised Supabase client
  * @param {Object} config
- * @param {string} config.tableName — e.g. 'content_overrides'
+ * @param {string} config.tableName – e.g. 'content_overrides'
  * @param {(scope: Object) => Object} config.scopeFilter
- *   — converts scope to a filter object, e.g.:
+ *   – converts scope to a filter object, e.g.:
  *     (scope) => ({ project_id: 'solving-for-zero', module_id: scope.moduleId })
- * @param {string} config.blockKeyColumn — column name for the block key (e.g. 'field' or 'block_key')
- * @param {string} config.valueColumn — column name for the value (e.g. 'value')
- * @param {string} [config.typeColumn] — column for block type (optional, not all tables have it)
- * @param {string} [config.editorColumn] — column for editor identity (e.g. 'edited_by')
- * @param {string} [config.previousValueColumn] — column for audit trail (e.g. 'previous_value')
- * @param {string} [config.onConflict] — upsert conflict columns (e.g. 'project_id,module_id,content_type,content_key,field')
+ * @param {string} config.blockKeyColumn – column name for the block key (e.g. 'field' or 'block_key')
+ * @param {string} config.valueColumn – column name for the value (e.g. 'value')
+ * @param {string} [config.typeColumn] – column for block type (optional, not all tables have it)
+ * @param {string} [config.editorColumn] – column for editor identity (e.g. 'edited_by')
+ * @param {string} [config.previousValueColumn] – column for audit trail (e.g. 'previous_value')
+ * @param {string} [config.onConflict] – upsert conflict columns (e.g. 'project_id,module_id,content_type,content_key,field')
  * @param {(scope: Object, blockKey: string, entry: Object) => Object} [config.buildRow]
- *   — custom row builder for upsert; if omitted, uses scopeFilter + blockKeyColumn + valueColumn
+ *   – custom row builder for upsert; if omitted, uses scopeFilter + blockKeyColumn + valueColumn
  *
  * @returns {import('../core/types').PersistenceAdapter}
  */

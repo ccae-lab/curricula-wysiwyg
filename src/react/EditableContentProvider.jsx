@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 /**
- * EditableContentProvider — adapter-driven content editing context.
+ * EditableContentProvider – adapter-driven content editing context.
  *
  * Wraps a content region (page, module, section) and provides:
  * - Read: blocks fetched via persistenceAdapter.fetchBlocks(scope)
@@ -10,12 +10,12 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
  * - Clear: remove a saved override via persistenceAdapter.deleteBlock
  *
  * If no provider wraps a component, useEditableContent/useEditableBlock
- * return the fallback — graceful degradation by design.
+ * return the fallback – graceful degradation by design.
  *
  * @param {Object} props
- * @param {Object} props.scope — opaque scope object passed to the persistence adapter
+ * @param {Object} props.scope – opaque scope object passed to the persistence adapter
  *   (e.g. { pageSlug: 'X' } for Engage, { projectId, moduleId } for Learn)
- * @param {string} props.scopeLabel — human-readable label shown in the EditorTray
+ * @param {string} props.scopeLabel – human-readable label shown in the EditorTray
  * @param {import('../core/types').AuthAdapter} props.authAdapter
  * @param {import('../core/types').PersistenceAdapter} props.persistenceAdapter
  * @param {import('../core/types').StorageAdapter} [props.storageAdapter]
@@ -211,7 +211,7 @@ export function EditableContentProvider({
 }
 
 /**
- * useEditableContent — read a single block with fallback.
+ * useEditableContent – read a single block with fallback.
  * Returns the saved/staged override if one exists, otherwise the fallback.
  */
 export function useEditableContent(blockKey, fallback, type = 'text') {
@@ -240,7 +240,7 @@ export function useEditableContent(blockKey, fallback, type = 'text') {
 }
 
 /**
- * useEditableBlock — read + write mutators for a single block.
+ * useEditableBlock – read + write mutators for a single block.
  */
 export function useEditableBlock(blockKey, fallback, type = 'text') {
   const ctx = useContext(EditableContentContext);
@@ -265,7 +265,7 @@ export function useEditableBlock(blockKey, fallback, type = 'text') {
 }
 
 /**
- * useEditorTray — access full context for the EditorTray component.
+ * useEditorTray – access full context for the EditorTray component.
  */
 export function useEditorTray() {
   return useContext(EditableContentContext);

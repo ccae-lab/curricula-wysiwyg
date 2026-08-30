@@ -606,7 +606,7 @@ export default function BibliographyAdmin({
                   >
                     {verified ? 'VERIFIED' : (row.verification_status || 'PENDING').toUpperCase()}
                   </span>
-                  <strong style={{ fontSize: 14 }}>{surname || '—'}</strong>
+                  <strong style={{ fontSize: 14 }}>{surname || '–'}</strong>
                   {d.year && <span style={{ color: t.muted, fontSize: 13 }}>, {d.year}</span>}
                   {href && (
                     <a
@@ -683,7 +683,7 @@ export default function BibliographyAdmin({
                     <button
                       onClick={() => patchRowState(row.id, { confirmDelete: true })}
                       style={{ background: 'none', color: t.bad, border: `1px solid ${t.bad}55`, borderRadius: 3, padding: '4px 10px', fontFamily: t.mono, fontSize: 9, cursor: 'pointer', letterSpacing: '0.08em' }}
-                      title="Delete this reference (2-step confirm). Inline cites in page content remain — fix those by hand."
+                      title="Delete this reference (2-step confirm). Inline cites in page content remain – fix those by hand."
                     >
                       REMOVE
                     </button>
@@ -756,8 +756,8 @@ export default function BibliographyAdmin({
                   OPENALEX MATCH · CONFIDENCE {(Number(state.enrichPreview.matchConfidence || 0) * 100).toFixed(0)}%
                 </div>
                 <div style={{ fontSize: 13, lineHeight: 1.4, marginBottom: 6 }}>
-                  <strong>{firstAuthorSurname(Array.isArray(state.enrichPreview.authors) ? state.enrichPreview.authors.join(', ') : state.enrichPreview.authors) || '—'}</strong>
-                  {state.enrichPreview.year ? `, ${state.enrichPreview.year}` : ''} — {state.enrichPreview.title || '—'}
+                  <strong>{firstAuthorSurname(Array.isArray(state.enrichPreview.authors) ? state.enrichPreview.authors.join(', ') : state.enrichPreview.authors) || '–'}</strong>
+                  {state.enrichPreview.year ? `, ${state.enrichPreview.year}` : ''} – {state.enrichPreview.title || '–'}
                   {state.enrichPreview.venue && <div style={{ color: t.muted, fontSize: 11, marginTop: 2 }}>{state.enrichPreview.venue}</div>}
                   {state.enrichPreview.doi && (
                     <div style={{ marginTop: 2 }}>
@@ -919,7 +919,7 @@ export default function BibliographyAdmin({
 function TwinLine({ label, twin, theme }) {
   if (!twin) return null;
   const authors = Array.isArray(twin.authors) ? twin.authors.join(', ') : (twin.authors || '');
-  const surname = firstAuthorSurname(authors) || '—';
+  const surname = firstAuthorSurname(authors) || '–';
   const href = doiToUrl(twin.doi || twin.doi_url) || twin.url || null;
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
@@ -940,7 +940,7 @@ function TwinLine({ label, twin, theme }) {
       </span>
       <div style={{ fontFamily: theme.font, fontSize: 13, color: theme.ink, lineHeight: 1.4, flex: 1 }}>
         <strong>{surname}</strong>
-        {twin.year ? `, ${twin.year}` : ''} — {twin.title || '—'}
+        {twin.year ? `, ${twin.year}` : ''} – {twin.title || '–'}
         {twin.venue && <span style={{ color: theme.muted, fontSize: 11 }}> · {twin.venue}</span>}
         {href && (
           <>

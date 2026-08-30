@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 /**
- * CommentsPanel (0.4.0) — shared "Comments & Contributions" thread.
+ * CommentsPanel (0.4.0) – shared "Comments & Contributions" thread.
  *
  * Ported from learn.curricula.dev's per-module comment block. Works for
  * any scope shape the host wants, because all database specifics live
@@ -24,7 +24,7 @@ import React, { useEffect, useState } from 'react';
  *   formatDate     (iso) => string. Default: locale short date.
  *   onPosted       Optional callback fired with the new comment after post.
  *
- * The adapter contract keeps the component framework-agnostic — Engage
+ * The adapter contract keeps the component framework-agnostic – Engage
  * and Learn both pass different adapters against the same shared
  * `comments` table or any other backend.
  */

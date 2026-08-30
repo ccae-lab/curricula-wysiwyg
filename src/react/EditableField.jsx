@@ -220,7 +220,7 @@ function FieldShell({
             <button
               type="button"
               onClick={() => { setDraft(displayValue); setEditorOpen(true); }}
-              title={help ? `${help} — click to edit` : 'Edit this block'}
+              title={help ? `${help} – click to edit` : 'Edit this block'}
               className={classNames.editButton || ''}
               style={classNames.editButton ? undefined : {
                 background: '#4338ca', border: 'none', borderRadius: 3,

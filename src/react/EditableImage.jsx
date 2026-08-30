@@ -4,7 +4,7 @@ import { useEditableBlock } from './EditableContentProvider.jsx';
 import EditBadge from './EditBadge.jsx';
 
 /**
- * EditableImage — inline image editor (src + alt).
+ * EditableImage – inline image editor (src + alt).
  */
 
 export default function EditableImage({

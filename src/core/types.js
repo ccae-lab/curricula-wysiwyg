@@ -1,5 +1,5 @@
 /**
- * @curricula/wysiwyg — core type definitions and adapter interfaces.
+ * @curricula/wysiwyg – core type definitions and adapter interfaces.
  *
  * These are documented via JSDoc, not TypeScript, because the consuming
  * projects are plain JS React/Vite apps.
@@ -8,7 +8,7 @@
 /**
  * @typedef {Object} BlockEntry
  * @property {'text'|'link'|'image'|'json'} type
- * @property {*} value — string for text, { label, href } for link,
+ * @property {*} value – string for text, { label, href } for link,
  *   { src, alt } for image, arbitrary object/array for json
  */
 
@@ -28,7 +28,7 @@
 
 /**
  * @typedef {Object} StorageAdapter
- * @property {(file: File) => Promise<string>} uploadImage — returns public URL
+ * @property {(file: File) => Promise<string>} uploadImage – returns public URL
  */
 
 /**
@@ -56,18 +56,18 @@
  * @property {string}  [verification_status]
  *
  * @typedef {Object} BibliographyInput
- * @property {string} citation — full source line as the user typed it
- * @property {string} [annotation] — optional annotation / why it matters
- * @property {number} [year] — parsed year if detectable
- * @property {Object} [meta] — arbitrary extra fields for the adapter
+ * @property {string} citation – full source line as the user typed it
+ * @property {string} [annotation] – optional annotation / why it matters
+ * @property {number} [year] – parsed year if detectable
+ * @property {Object} [meta] – arbitrary extra fields for the adapter
  *
  * @typedef {Object} BibliographyResult
  * @property {string} [id]
  * @property {string} [citation_key]
- * @property {string} [inlineInsertion] — adapter-controlled string to append to the draft
+ * @property {string} [inlineInsertion] – adapter-controlled string to append to the draft
  *
  * @typedef {Object} BibliographySearchQuery
- * @property {string}  citation — the raw string the user typed
+ * @property {string}  citation – the raw string the user typed
  * @property {string} [doi]
  * @property {string} [firstAuthor]
  * @property {number} [year]
@@ -110,7 +110,7 @@
  * @property {string}  [title]
  * @property {string}  [abstract]
  * @property {string}  [venue]
- * @property {number}   matchConfidence — 0..1, plugin flips to verified at ≥ threshold
+ * @property {number}   matchConfidence – 0..1, plugin flips to verified at ≥ threshold
  *
  * @typedef {Object} EnrichmentAdapter
  * @property {(input: EnrichmentInput) => Promise<EnrichmentResult | null>} enrich
@@ -126,7 +126,7 @@
  *
  * @typedef {Object} AIAnnotationInput
  * @property {BibliographyEntry} entry
- * @property {string} [voiceRules] — optional extra guidance for the LLM
+ * @property {string} [voiceRules] – optional extra guidance for the LLM
  *
  * @typedef {Object} AIAnnotationAdapter
  * @property {(input: AIAnnotationInput) => Promise<string | null>} draftAnnotation
@@ -164,7 +164,7 @@
  * @typedef {Object} GlossaryResult
  * @property {string} [id]
  * @property {string} [term]
- * @property {string} [inlineInsertion] — adapter-controlled string to append to the draft
+ * @property {string} [inlineInsertion] – adapter-controlled string to append to the draft
  *
  * @typedef {Object} GlossaryAdapter
  * @property {(input: GlossaryInput) => Promise<GlossaryResult | void>} addTerm

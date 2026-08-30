@@ -1,8 +1,8 @@
 /**
- * Supabase Storage adapter — for image uploads.
+ * Supabase Storage adapter – for image uploads.
  *
- * @param {Object} supabase — initialised Supabase client
- * @param {string} bucketName — e.g. 'content-images'
+ * @param {Object} supabase – initialised Supabase client
+ * @param {string} bucketName – e.g. 'content-images'
  *
  * @returns {import('../core/types').StorageAdapter}
  */

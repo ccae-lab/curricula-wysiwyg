@@ -4,7 +4,7 @@ import { useEditableBlock } from './EditableContentProvider.jsx';
 import EditBadge from './EditBadge.jsx';
 
 /**
- * EditableJSON — structured JSON editor for arrays, objects, etc.
+ * EditableJSON – structured JSON editor for arrays, objects, etc.
  * Renders via a `render` prop; editor is a raw textarea with validation.
  */
 
